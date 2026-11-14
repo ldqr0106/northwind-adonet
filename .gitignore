@@ -1,0 +1,9 @@
+**/bin/
+**/obj/
+.vs/
+**/__pycache__/
+
+**/conexion.local.txt
+.env
+*.user
+*.suo

@@ -1,0 +1,9 @@
+<Solution>
+  <Folder Name="/base-datos/">
+    <File Path="base-datos/README.md" />
+    <File Path="base-datos/northwind-reducida-mysql.sql" />
+    <File Path="base-datos/LICENCIA-MICROSOFT.txt" />
+  </Folder>
+  <File Path="README.md" />
+  <Project Path="Northwind-Catalogo/Northwind-Catalogo.csproj" />
+</Solution>
