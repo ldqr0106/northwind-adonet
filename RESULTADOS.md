@@ -95,21 +95,23 @@ Con precio 20 y stock 10 se probó `ORDER BY UnitPrice DESC, ProductID ASC`.
 
 ### Asignación de parámetros
 
-Los valores que escribe el usuario no se pegan dentro del texto SQL. En el SQL solo pongo marcadores (`@precioMaximo`, `@existenciasMinimas`, `@patron`) y después le asigno su valor a cada uno con `Parameters.AddWithValue`. Así MySQL recibe la instrucción y los datos por separado: lo que escriba la persona se trata como un valor y nunca como parte de la instrucción, lo que evita la inyección SQL. En la búsqueda por nombre, los `%` van en el valor del parámetro (`"%" + fragmento + "%"`), no en el SQL, y con eso el `LIKE` busca el fragmento en cualquier parte del nombre.
+Cuando el usuario escribe un precio o un nombre, yo no lo pego dentro del texto del SQL. Dejo un marcador, por ejemplo `@precioMaximo`, y después le doy su valor con `Parameters.AddWithValue`. Así MySQL recibe por un lado la consulta y por otro los datos, y lo que escriba la persona siempre se toma como un dato, nunca como parte de la instrucción. Con eso evito la inyección SQL. En la búsqueda por nombre los `%` no van en el SQL sino en el valor del parámetro (`"%" + fragmento + "%"`), y así el `LIKE` encuentra el fragmento en cualquier parte del nombre.
 
-### Recursos que libera cada `using`
+### Qué libera cada `using`
 
-- **`using` del `MySqlDataReader`:** libera el lector de resultados al terminar de recorrer las filas. La conexión queda libre para otra consulta, pero sigue abierta.
-- **`using` del `MySqlCommand`:** libera el comando. No cierra la conexión.
-- **`using` de la `MySqlConnection`:** cierra la conexión y la devuelve al pool de conexiones. No apaga MySQL.
+- **El del `MySqlDataReader`:** libera el lector cuando termino de recorrer las filas. La conexión queda libre para hacer otra consulta, pero sigue abierta.
+- **El del `MySqlCommand`:** libera el comando, y tampoco cierra la conexión.
+- **El del `MySqlConnection`:** cierra la conexión y la devuelve al pool. No apaga el servidor MySQL.
 
-Se liberan en orden inverso al que se declararon, incluso si ocurre una excepción.
+Cada uno se libera al salir de su bloque, y en orden inverso a como se abrieron, incluso si pasa una excepción.
 
-### Diferencia entre cero coincidencias, una columna NULL y una excepción
+### Cero coincidencias, NULL y excepción
 
-- **Cero coincidencias:** la consulta se ejecutó bien, pero ninguna fila cumple los filtros. `Read` devuelve `false` de una vez y muestro un mensaje; no es un error.
-- **Columna NULL:** sí hay fila, pero en esa columna no hay valor (por ejemplo `QuantityPerUnit`). Se comprueba con `IsDBNull` antes de leer, y se muestra «Presentación sin registrar». No es cero ni texto vacío.
-- **Excepción (`MySqlException`):** la operación falló: no se pudo conectar (1042), la tabla no existe (1146) o se repitió una clave (1062). Se captura con `catch` y se informa del error, distinto de los dos casos anteriores.
+Son tres cosas distintas y no las debo mezclar:
+
+- **Cero coincidencias:** la consulta funcionó bien, pero ninguna fila cumple los filtros. `Read()` devuelve `false` de una vez y yo muestro un mensaje. No es un error. Lo comprobé con precio 0 y stock 0, y con precio 1000 y stock 10000.
+- **Columna NULL:** sí hay fila, pero ese dato no tiene valor. Uso `IsDBNull` antes de leerlo y muestro «Presentación sin registrar». NULL no es lo mismo que cero ni que un texto vacío.
+- **Excepción (`MySqlException`):** algo falló de verdad: no conectó (1042), la tabla no existe (1146) o se repitió una clave (1062). Eso lo atrapo con `catch` y aviso del error.
 
 ---
 
